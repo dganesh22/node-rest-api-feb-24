@@ -1,34 +1,30 @@
 const express = require('express')
-const PORT = 4600
+// settings to access .env variables
+require('dotenv').config()
+const connectDb = require('./db/connect')
+const cors = require('cors')
+
+const PORT = process.env.PORT
 
 // instance of exrpess
 const app = express()
 
-// app.get(route,controller)
-// index route - get request method
-app.get(`/`, function (req,res) {
-    res.status(200).json({ status: true, msg: "Welcome to CRUD API"})   
+// body parser middleware
+app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
+
+// middleware 
+// cors => cross origin resource sharing
+app.use(cors())
+
+// index route
+app.get(`/`,(req,res) => {
+    res.status(200).json({ status: true, msg: "Welcome to CRUD API"}) 
 })
 
-// read all users => get request method
-app.get(`/api/users`, function (req,res) {
-    res.status(201).json({ status: true, msg: "all users"})   
-})
 
-// create new user => post request 
-app.post(`/api/user/create`, function (req,res) {
-    res.status(201).json({ status: true,msg: "create new user"})   
-})
-
-// update existing user => patch request
-app.patch(`/api/user/:id`, function (req,res) {
-    res.status(201).json({ status: true,msg: "update existing user"})   
-})
-
-// delete existing user => delete request
-app.delete(`/api/user/:id`, function (req,res) {
-    res.status(201).json({ status: true,msg: "delete existing user"})   
-})
+// connecting router => app.use(path,router)
+app.use(`/api/user`,require('./route/userRoute'))
 
 
 // default route
@@ -38,5 +34,12 @@ app.all('**', (req,res) => {
 
 // server listen
 app.listen(PORT,() => {
+    if(process.env.MODE === "development") {
+        // to connect local database
+        connectDb(process.env.MONGO_DEV)
+    } else if(process.env.MODE === "production") {
+        // to connect cloud database
+        connectDb(process.env.MONGO_URL)
+    }
     console.log(`server is running @ http://localhost:${PORT}`)
 })
